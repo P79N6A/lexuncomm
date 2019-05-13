@@ -3,7 +3,6 @@ package io.cordova.lexuncompany.units;
 import android.content.Context;
 import android.widget.Toast;
 
-import com.android.tu.loadingdialog.LoadingDailog;
 
 import io.cordova.lexuncompany.application.MyApplication;
 
@@ -16,8 +15,8 @@ public class ViewUnits {
     public static ViewUnits mIntances = null;
 
     //缓存等待框
-    private LoadingDailog.Builder mLoadBuilder;
-    private static LoadingDailog mDialog;
+    private LoadingDialog.Builder mLoadBuilder;
+    private static LoadingDialog mDialog;
 
     private ViewUnits() {
     }
@@ -47,7 +46,7 @@ public class ViewUnits {
      * 显示等待框
      */
     public void showLoading(Context context, String message) {
-        mLoadBuilder = new LoadingDailog.Builder(context)
+        mLoadBuilder = new LoadingDialog.Builder(context)
                 .setMessage(message)
                 .setCancelable(true)
                 .setCancelOutside(true);

@@ -10,20 +10,20 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.TextView;
 
-import com.android.tu.loadingdialog.LoadingDailog;
 import com.jph.takephoto.app.TakePhotoActivity;
 import com.umeng.analytics.MobclickAgent;
 
 import io.cordova.lexuncompany.R;
 import io.cordova.lexuncompany.inter.TakePicOnClick;
+import io.cordova.lexuncompany.units.LoadingDialog;
 
 /**
  * Created by JasonYao on 2018/3/19.
  */
 
 public class BaseTakePhotoActivity extends TakePhotoActivity {
-    private LoadingDailog.Builder mLoadBuilder;
-    private LoadingDailog mDialog;
+    private LoadingDialog.Builder mLoadBuilder;
+    private LoadingDialog mDialog;
     public static BaseTakePhotoActivity mInstance;
 
     //选择照片底部弹出框
@@ -41,7 +41,7 @@ public class BaseTakePhotoActivity extends TakePhotoActivity {
     }
 
     private void initView() {
-        mLoadBuilder = new LoadingDailog.Builder(this)
+        mLoadBuilder = new LoadingDialog.Builder(this)
                 .setMessage("请求中...")
                 .setCancelable(true)
                 .setCancelOutside(true);

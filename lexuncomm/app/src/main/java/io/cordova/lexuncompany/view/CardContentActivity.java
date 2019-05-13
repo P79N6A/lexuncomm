@@ -21,6 +21,7 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.animation.AnimationUtils;
+import android.webkit.GeolocationPermissions;
 import android.webkit.JavascriptInterface;
 import android.webkit.JsResult;
 import android.webkit.WebChromeClient;
@@ -115,9 +116,13 @@ public class CardContentActivity extends BaseTakePhotoActivity implements Androi
         webSettings.setJavaScriptCanOpenWindowsAutomatically(true); //设置运行JS弹窗
         webSettings.setUserAgentString(webSettings.getUserAgentString() + "-Android");  //设置用户代理
         webSettings.setDomStorageEnabled(true);
+        webSettings.setAllowFileAccess(true);
         webSettings.setCacheMode(WebSettings.LOAD_NO_CACHE);
         webSettings.setSupportZoom(true);
         webSettings.setLayoutAlgorithm(WebSettings.LayoutAlgorithm.NORMAL);
+
+        //启用地理定位
+        webSettings.setGeolocationEnabled(true);
         webSettings.setUseWideViewPort(true);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             webSettings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
@@ -133,6 +138,12 @@ public class CardContentActivity extends BaseTakePhotoActivity implements Androi
                         mBinding.layoutLoading.setVisibility(View.GONE);
                     }
                 }
+            }
+
+            @Override
+            public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {
+                callback.invoke(origin,true,false);
+                super.onGeolocationPermissionsShowPrompt(origin, callback);
             }
 
             @Override

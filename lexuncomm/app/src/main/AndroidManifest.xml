@@ -107,6 +107,9 @@
                 <category android:name="${applicationId}" />
             </intent-filter>
         </activity>
+        <activity android:name=".view.ScanQRCodeActivity"
+                  android:launchMode="singleTask"
+                  android:screenOrientation="portrait"/>
 
         <service
             android:name="cn.jpush.android.service.PushService"

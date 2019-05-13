@@ -26,12 +26,23 @@ allprojects {
 }
 
 android {
+    signingConfigs {
+        debug {
+            storeFile file('E:\\lexuncomm\\lexuncomm\\keystoreLexunCompany.jks')
+            storePassword 'tdr123456'
+            keyAlias = 'key0'
+            keyPassword 'tdr123456'
+        }
+    }
     compileSdkVersion 28
+    buildToolsVersion '27.0.3'
     defaultConfig {
-        versionCode 12
-        versionName "1.0.10-2"
+        versionCode 14
+        versionName "1.0.11"
         applicationId "io.cordova.lexuncompany"
-
+        targetSdkVersion 28
+        minSdkVersion 18
+        multiDexEnabled true
 
         ndk {
             abiFilters "armeabi", "armeabi-v7a", "x86", "mips", "armeabi", "mips", "mips64"
@@ -39,10 +50,10 @@ android {
     }
 
     lintOptions {
-      abortOnError false;
+        abortOnError false;
     }
 
-    buildToolsVersion '27.0.3'
+
 
 
     compileOptions {
@@ -53,7 +64,7 @@ android {
     sourceSets {
         main {
             jniLibs.srcDirs = ['libs']
-            jni.srcDirs=[]
+            jni.srcDirs = []
         }
     }
 
@@ -64,7 +75,7 @@ android {
 
 dependencies {
     implementation fileTree(include: '*.jar', dir: 'libs')
-    implementation 'com.android.support:support-annotations:27.0.1'
+
     // SUB-PROJECT DEPENDENCIES END
     implementation 'com.facebook.stetho:stetho:1.5.0'
     //chrome查看sqlite插件
@@ -79,7 +90,7 @@ dependencies {
     implementation 'com.android.support:cardview-v7:28.0.0'
     implementation 'com.android.support:recyclerview-v7:28.0.0'
     //等待框
-    implementation 'com.github.gittjy:LoadingDialog:1.0.2'
+//    implementation 'com.github.gittjy:LoadingDialog:1.0.2'
     implementation 'com.google.code.gson:gson:2.2.4'
     //图片选择器3
     implementation 'com.jaikydota.imagespickers:imagespickers:1.0.6'
@@ -102,4 +113,13 @@ dependencies {
     implementation 'cn.bingoogolapple:bga-photopicker:1.2.8@aar'
     implementation 'cn.bingoogolapple:bga-baseadapter:1.2.9@aar'
     implementation 'cn.bingoogolapple:bga-flowlayout:1.0.0@aar'
+
+    implementation 'com.android.support:multidex:1.0.1'
+
+    //butterknife
+    implementation 'com.jakewharton:butterknife:8.4.0'
+    annotationProcessor 'com.jakewharton:butterknife-compiler:8.4.0'
+
+    //扫码
+    implementation project(':zbar')
 }

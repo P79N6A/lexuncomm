@@ -1,6 +1,8 @@
 package io.cordova.lexuncompany.application;
 
 import android.app.Application;
+import android.content.Context;
+import android.support.multidex.MultiDex;
 
 import com.facebook.stetho.Stetho;
 import com.tencent.bugly.Bugly;
@@ -50,5 +52,11 @@ public class MyApplication extends Application {
 
     public static MyApplication getInstance() {
         return mInstance;
+    }
+
+    @Override
+    protected void attachBaseContext(Context base) {
+        super.attachBaseContext(base);
+        MultiDex.install(this);
     }
 }

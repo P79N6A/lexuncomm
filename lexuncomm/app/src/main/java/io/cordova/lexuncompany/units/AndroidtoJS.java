@@ -18,11 +18,11 @@ import org.json.JSONObject;
 import java.util.Map;
 
 import io.cordova.lexuncompany.application.MyApplication;
-import io.cordova.lexuncompany.inter.GetImageListener;
 import io.cordova.lexuncompany.inter.QrCodeScanInter;
 import io.cordova.lexuncompany.view.CardContentActivity;
 import io.cordova.lexuncompany.inter.CityPickerResultListener;
 import io.cordova.lexuncompany.view.QrCodeScanActivity;
+import io.cordova.lexuncompany.view.ScanQRCodeActivity;
 
 
 /**
@@ -44,6 +44,7 @@ public class AndroidtoJS implements QrCodeScanInter, CityPickerResultListener {
 
     public static boolean hasBaiduLocation = false;  //标记是否已经获取到百度定位点，避免巡逻和获取百度定位点重复
 
+
     public static AndroidtoJS getInstance(AndroidToJSCallBack callBack) {
         mInstance = new AndroidtoJS(callBack);
         return mInstance;
@@ -53,24 +54,7 @@ public class AndroidtoJS implements QrCodeScanInter, CityPickerResultListener {
         this.mCallBack = callBack;
     }
 
-    /**
-     * 单例获取百度定位对象
-     *
-     * @return
-     */
-    private LocationClient getBaiduMapInstance() {
-        if (mBaiduOption == null) mBaiduOption = new LocationClientOption();
-        if (mBaiduLocationClient == null)
-            mBaiduLocationClient = new LocationClient(MyApplication.getInstance());
-        mBaiduOption.setLocationMode(LocationClientOption.LocationMode.Hight_Accuracy);
-        mBaiduOption.setCoorType("bd09ll");
-        mBaiduOption.setIgnoreKillProcess(false);
-        mBaiduOption.setScanSpan(1000);
 
-        mBaiduOption.setOpenGps(true);
-        mBaiduLocationClient.setLocOption(mBaiduOption);
-        return mBaiduLocationClient;
-    }
 
     private LocationClient getBaiduLocationClient1(String callBack) {
         if (mBaiduOption1 == null) mBaiduOption1 = new LocationClientOption();
@@ -86,6 +70,7 @@ public class AndroidtoJS implements QrCodeScanInter, CityPickerResultListener {
         mBaiduLocationClient1.registerLocationListener(new BDAbstractLocationListener() {
             @Override
             public void onReceiveLocation(BDLocation bdLocation) {
+
                 sendCallBack(callBack, "200", "success", bdLocation.getLatitude() + "," + bdLocation.getLongitude());
 
                 mBaiduLocationClient1.stop();
@@ -195,10 +180,10 @@ public class AndroidtoJS implements QrCodeScanInter, CityPickerResultListener {
      */
     @JavascriptInterface
     public void qrScan(String callBack) {
-        Intent intent = new Intent(MyApplication.getInstance().getBaseContext(), QrCodeScanActivity.class);
+        Intent intent = new Intent(MyApplication.getInstance().getBaseContext(), ScanQRCodeActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         intent.putExtra("callBack", callBack);
-        QrCodeScanActivity.setQrCodeScanInter(AndroidtoJS.this);
+        ScanQRCodeActivity.setQrCodeScanInter(AndroidtoJS.this);
         MyApplication.getInstance().getBaseContext().startActivity(intent);
     }
 
@@ -296,16 +281,35 @@ public class AndroidtoJS implements QrCodeScanInter, CityPickerResultListener {
 
     @JavascriptInterface
     public void beginPatrol(String callBack) {
-        getBaiduMapInstance().registerLocationListener(new BDAbstractLocationListener() {
-            @Override
-            public void onReceiveLocation(BDLocation bdLocation) {
-                Log.e(TAG, "开始巡逻");
-                sendCallBack(callBack, "200", "success", bdLocation.getLatitude() + "," + bdLocation.getLongitude());
-            }
-        });
 
-        getBaiduMapInstance().start();
+        if (mBaiduLocationClient == null) {
+
+            mBaiduLocationClient = new LocationClient(MyApplication.getInstance());
+
+            mBaiduOption = new LocationClientOption();
+
+            mBaiduOption.setLocationMode(LocationClientOption.LocationMode.Hight_Accuracy);
+            mBaiduOption.setCoorType("bd09ll");
+
+            mBaiduOption.setIgnoreKillProcess(false);
+            mBaiduOption.setScanSpan(1000 * 7);
+
+            mBaiduOption.setOpenGps(true);
+            mBaiduLocationClient.setLocOption(mBaiduOption);
+            mBaiduLocationClient.start();
+            mBaiduLocationClient.registerLocationListener(new BDAbstractLocationListener() {
+                @Override
+                public void onReceiveLocation(BDLocation bdLocation) {
+
+                    sendCallBack(callBack, "200", "success", bdLocation.getLatitude() + "," + bdLocation.getLongitude());
+                }
+            });
+        } else if (!mBaiduLocationClient.isStarted()) {
+            mBaiduLocationClient.start();
+        }
+
     }
+
 
     /**
      * 结束巡逻（百度坐标系统）
