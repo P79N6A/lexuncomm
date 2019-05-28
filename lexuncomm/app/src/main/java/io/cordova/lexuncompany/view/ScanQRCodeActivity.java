@@ -2,6 +2,7 @@ package io.cordova.lexuncompany.view;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.os.Vibrator;
 import android.support.annotation.Nullable;
@@ -17,6 +18,8 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import cn.bertsir.zbar.CameraPreview;
+import cn.bertsir.zbar.Qr.Symbol;
+import cn.bertsir.zbar.QrConfig;
 import cn.bertsir.zbar.ScanCallback;
 import cn.bertsir.zbar.utils.QRUtils;
 import cn.bertsir.zbar.view.ScanView;
@@ -52,6 +55,11 @@ public class ScanQRCodeActivity extends BaseActivity implements QRCodeView.Deleg
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+        Symbol.is_auto_zoom = true;
+        Symbol.is_only_scan_center = true;
+        Symbol.scanType =  QrConfig.TYPE_QRCODE;
         setContentView(R.layout.activity_scan_qrcode);
         ButterKnife.bind(this);
         init();
@@ -59,7 +67,7 @@ public class ScanQRCodeActivity extends BaseActivity implements QRCodeView.Deleg
 
     private void init() {
         mCallBack = super.getIntent().getStringExtra("callBack");
-
+        scanView.startScan();
         cbFlashLight.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -206,7 +214,7 @@ public class ScanQRCodeActivity extends BaseActivity implements QRCodeView.Deleg
                             return;
                         }
                         //优先使用zbar识别一次二维码
-                        final String qrcontent = QRUtils.getInstance().decodeQRcode(imagePath);
+                         String qrcontent = QRUtils.getInstance().decodeQRcode(imagePath);
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
@@ -214,15 +222,15 @@ public class ScanQRCodeActivity extends BaseActivity implements QRCodeView.Deleg
                                     scanResult(qrcontent);
                                 } else {
                                     //尝试用zxing再试一次识别二维码
-                                    final String qrcontent = QRUtils.getInstance().decodeQRcodeByZxing(imagePath);
-                                    if (!TextUtils.isEmpty(qrcontent)) {
-                                        scanResult(qrcontent);
+                                     String qrCode = QRUtils.getInstance().decodeQRcodeByZxing(imagePath);
+                                    if (!TextUtils.isEmpty(qrCode)) {
+                                        scanResult(qrCode);
                                     } else {
                                         //再试试是不是条形码
                                         try {
-                                            String barcontent = QRUtils.getInstance().decodeBarcode(imagePath);
-                                            if (!TextUtils.isEmpty(barcontent)) {
-                                                scanResult(barcontent);
+                                            String barCode = QRUtils.getInstance().decodeBarcode(imagePath);
+                                            if (!TextUtils.isEmpty(barCode)) {
+                                                scanResult(barCode);
                                             } else {
                                                 ToastUtils.showToast(getApplicationContext(), "识别失败！");
                                             }

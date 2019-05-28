@@ -33,6 +33,13 @@ android {
             keyAlias = 'key0'
             keyPassword 'tdr123456'
         }
+
+        release {
+            storeFile file('E:\\lexuncomm\\lexuncomm\\keystoreLexunCompany.jks')
+            storePassword 'tdr123456'
+            keyAlias = 'key0'
+            keyPassword 'tdr123456'
+        }
     }
     compileSdkVersion 28
     buildToolsVersion '27.0.3'
@@ -52,8 +59,6 @@ android {
     lintOptions {
         abortOnError false;
     }
-
-
 
 
     compileOptions {

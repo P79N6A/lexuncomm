@@ -6,6 +6,7 @@ import android.support.multidex.MultiDex;
 
 import com.facebook.stetho.Stetho;
 import com.tencent.bugly.Bugly;
+import com.tencent.bugly.beta.Beta;
 import com.umeng.analytics.MobclickAgent;
 import com.umeng.commonsdk.UMConfigure;
 import com.yanzhenjie.nohttp.Logger;
@@ -13,6 +14,8 @@ import com.yanzhenjie.nohttp.NoHttp;
 import com.yanzhenjie.nohttp.URLConnectionNetworkExecutor;
 
 import cn.jpush.android.api.JPushInterface;
+import io.cordova.lexuncompany.bean.base.App;
+import io.cordova.lexuncompany.view.CardContentActivity;
 
 /**
  * Created by JasonYao on 2018/2/27.
@@ -37,7 +40,9 @@ public class MyApplication extends Application {
 
         Stetho.initializeWithDefaults(this);  //初始化Chrome查看Sqlite插件
 
-        Bugly.init(getApplicationContext(), "026a35dd56", false);  //乐巡企业版bugly
+
+        Beta.canShowUpgradeActs.add(CardContentActivity.class);
+        Bugly.init(getApplicationContext(), App.LexunCard.BUGLY_APPID, false);  //乐巡企业版bugly
 
         //极光推送
         JPushInterface.setDebugMode(true);

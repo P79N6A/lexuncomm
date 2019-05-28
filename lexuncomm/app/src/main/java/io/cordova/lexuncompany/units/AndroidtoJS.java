@@ -42,8 +42,6 @@ public class AndroidtoJS implements QrCodeScanInter, CityPickerResultListener {
     private AndroidToJSCallBack mCallBack;
     private Gson mGson = new Gson();
 
-    public static boolean hasBaiduLocation = false;  //标记是否已经获取到百度定位点，避免巡逻和获取百度定位点重复
-
 
     public static AndroidtoJS getInstance(AndroidToJSCallBack callBack) {
         mInstance = new AndroidtoJS(callBack);
@@ -53,7 +51,6 @@ public class AndroidtoJS implements QrCodeScanInter, CityPickerResultListener {
     private AndroidtoJS(AndroidToJSCallBack callBack) {
         this.mCallBack = callBack;
     }
-
 
 
     private LocationClient getBaiduLocationClient1(String callBack) {
@@ -252,7 +249,6 @@ public class AndroidtoJS implements QrCodeScanInter, CityPickerResultListener {
      */
     @JavascriptInterface
     public void getBaiduCoordinate(String callBack) {
-        hasBaiduLocation = true;
         getBaiduLocationClient1(callBack).start();
     }
 
@@ -292,7 +288,7 @@ public class AndroidtoJS implements QrCodeScanInter, CityPickerResultListener {
             mBaiduOption.setCoorType("bd09ll");
 
             mBaiduOption.setIgnoreKillProcess(false);
-            mBaiduOption.setScanSpan(1000 * 7);
+            mBaiduOption.setScanSpan(7000);
 
             mBaiduOption.setOpenGps(true);
             mBaiduLocationClient.setLocOption(mBaiduOption);
