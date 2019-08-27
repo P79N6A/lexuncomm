@@ -26,13 +26,11 @@ import io.cordova.lexuncompany.view.CardContentActivity;
  */
 public class MyReceiver extends BroadcastReceiver {
     private static final String TAG = "JIGUANG-Example";
-    private static JSONObject mJsoCustomMessage = null;
 
     @Override
     public void onReceive(Context context, Intent intent) {
         try {
             Bundle bundle = intent.getExtras();
-            Log.e(TAG, "[MyReceiver] onReceive - " + intent.getAction() + ", extras: " + printBundle(bundle));
 
             if (JPushInterface.ACTION_REGISTRATION_ID.equals(intent.getAction())) {
                 String regId = bundle.getString(JPushInterface.EXTRA_REGISTRATION_ID);
@@ -42,19 +40,16 @@ public class MyReceiver extends BroadcastReceiver {
             } else if (JPushInterface.ACTION_MESSAGE_RECEIVED.equals(intent.getAction())) {
                 Log.d(TAG, "[MyReceiver] 接收到推送下来的自定义消息: " + bundle.getString(JPushInterface.EXTRA_MESSAGE));
 //                mJsoCustomMessage = new JsonParser().parse(bundle.getString(JPushInterface.EXTRA_MESSAGE)).getAsJsonObject();
-                mJsoCustomMessage = new JSONObject(bundle.getString(JPushInterface.EXTRA_MESSAGE));
 
             } else if (JPushInterface.ACTION_NOTIFICATION_RECEIVED.equals(intent.getAction())) {
                 int notifactionId = bundle.getInt(JPushInterface.EXTRA_NOTIFICATION_ID);
-                mJsoCustomMessage = new JSONObject(bundle.getString(JPushInterface.EXTRA_MESSAGE));
                 Log.d(TAG, "[MyReceiver] 接收到推送下来的通知的ID: " + notifactionId);
-                Log.e(TAG,"推送消息内容体："+mJsoCustomMessage.toString());
 
             } else if (JPushInterface.ACTION_NOTIFICATION_OPENED.equals(intent.getAction())) {
                 Log.d(TAG, "[MyReceiver] 用户点击打开了通知");
-                Log.d(TAG, "[MyReceiver] 用户点击接收到推送下来的自定义消息: " + bundle.getString(JPushInterface.EXTRA_MESSAGE));
+                Log.d(TAG, "[MyReceiver] 用户点击接收到推送下来的自定义消息: " + bundle.getString(JPushInterface.EXTRA_EXTRA));
 
-                jump(context);
+                jump(context, bundle.getString(JPushInterface.EXTRA_EXTRA));
 
             } else if (JPushInterface.ACTION_RICHPUSH_CALLBACK.equals(intent.getAction())) {
                 Log.d(TAG, "[MyReceiver] 用户收到到RICH PUSH CALLBACK: " + bundle.getString(JPushInterface.EXTRA_EXTRA));
@@ -72,82 +67,50 @@ public class MyReceiver extends BroadcastReceiver {
 
     }
 
-    private void jump(Context context) throws JSONException {
+    private void jump(Context context, String result) {
         //打开自定义的Activity
         Intent i = new Intent();
-        if (mJsoCustomMessage == null) {
+        if (TextUtils.isEmpty(result)) {
             Log.e(TAG, "1");
             i.setClass(context, CardContentActivity.class);
             i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
             context.startActivity(i);
         } else {
-            i.putExtra("cardId", mJsoCustomMessage.getString("CardID"));
-            i.putExtra("url", mJsoCustomMessage.getString("Url"));
-            Log.e(TAG, mJsoCustomMessage.getString("CardID"));
-            Log.e(TAG, mJsoCustomMessage.getString("Url"));
+            try {
+                JSONObject jsonObject = new JSONObject(result);
+                i.putExtra("cardId", jsonObject.getString("CardID"));
+                i.putExtra("url", jsonObject.getString("Url"));
+                Log.e(TAG, jsonObject.getString("CardID"));
+                Log.e(TAG, jsonObject.getString("Url"));
 
-            if (FormatUtils.getIntances().isEmpty(mJsoCustomMessage.getString("Url"))) {
-                Log.e(TAG, "2");
-                i.setClass(context, CardContentActivity.class);
-                i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                context.startActivity(i);
-            } else {
-                Log.e(TAG, "3");
-                if (CardContentActivity.isRunning) {
-                    Log.e(TAG, "4");
-
-                    i.setAction(Request.Broadcast.RELOADURL);
-                    i.putExtra("id", mJsoCustomMessage.getString("CardID"));
-                    i.putExtra("url", mJsoCustomMessage.getString("Url"));
-                    context.sendBroadcast(i);
-                } else {
-                    Log.e(TAG, "5");
-
-                    CardItem cardItem = new CardItem();
-                    cardItem.setCardID(mJsoCustomMessage.getString("CardID"));
-                    cardItem.setCardUrl(mJsoCustomMessage.getString("Url"));
+                if (TextUtils.isEmpty(jsonObject.getString("Url"))) {
+                    Log.e(TAG, "2");
                     i.setClass(context, CardContentActivity.class);
                     i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                    i.putExtra("cardItem", cardItem);
-                    i.putExtra("type", Request.StartActivityRspCode.PUSH_CARDCONTENT_JUMP);
                     context.startActivity(i);
+                } else {
+                    if (CardContentActivity.isRunning) {
 
-                }
-            }
-        }
-    }
-
-    // 打印所有的 intent extra 数据
-    private static String printBundle(Bundle bundle) {
-        StringBuilder sb = new StringBuilder();
-        for (String key : bundle.keySet()) {
-            if (key.equals(JPushInterface.EXTRA_NOTIFICATION_ID)) {
-                sb.append("\nkey:" + key + ", value:" + bundle.getInt(key));
-            } else if (key.equals(JPushInterface.EXTRA_CONNECTION_CHANGE)) {
-                sb.append("\nkey:" + key + ", value:" + bundle.getBoolean(key));
-            } else if (key.equals(JPushInterface.EXTRA_EXTRA)) {
-                if (TextUtils.isEmpty(bundle.getString(JPushInterface.EXTRA_EXTRA))) {
-                    Log.i(TAG, "This message has no Extra data");
-                    continue;
-                }
-
-                try {
-                    JSONObject json = new JSONObject(bundle.getString(JPushInterface.EXTRA_EXTRA));
-                    Iterator<String> it = json.keys();
-
-                    while (it.hasNext()) {
-                        String myKey = it.next();
-                        sb.append("\nkey:" + key + ", value: [" +
-                                myKey + " - " + json.optString(myKey) + "]");
+                        i.setAction(Request.Broadcast.RELOADURL);
+                        i.putExtra("id", jsonObject.getString("CardID"));
+                        i.putExtra("url", jsonObject.getString("Url"));
+                        context.sendBroadcast(i);
+                    } else {
+                        CardItem cardItem = new CardItem();
+                        cardItem.setCardID(jsonObject.getString("CardID"));
+                        cardItem.setCardUrl(jsonObject.getString("Url"));
+                        i.setClass(context, CardContentActivity.class);
+                        i.putExtra("cardItem", cardItem);
+                        i.putExtra("type", Request.StartActivityRspCode.PUSH_CARDCONTENT_JUMP);
+                        i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        context.startActivity(i);
                     }
-                } catch (JSONException e) {
-                    Log.e(TAG, "Get message extra JSON error!");
                 }
+            } catch (JSONException e) {
+                e.printStackTrace();
 
-            } else {
-                sb.append("\nkey:" + key + ", value:" + bundle.getString(key));
             }
+
         }
-        return sb.toString();
     }
 }

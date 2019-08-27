@@ -57,7 +57,6 @@ public class ScanQRCodeActivity extends BaseActivity implements QRCodeView.Deleg
         super.onCreate(savedInstanceState);
 
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-        Symbol.is_auto_zoom = true;
         Symbol.is_only_scan_center = true;
         Symbol.scanType =  QrConfig.TYPE_QRCODE;
         setContentView(R.layout.activity_scan_qrcode);

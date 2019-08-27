@@ -36,7 +36,9 @@ import com.jph.takephoto.model.TImage;
 import com.jph.takephoto.model.TResult;
 
 import java.util.ArrayList;
+import java.util.Random;
 
+import cn.jpush.android.api.JPushInterface;
 import io.cordova.lexuncompany.R;
 import io.cordova.lexuncompany.bean.base.App;
 import io.cordova.lexuncompany.bean.base.Request;
@@ -96,6 +98,7 @@ public class CardContentActivity extends BaseTakePhotoActivity implements Androi
     protected void onResume() {
         super.onResume();
         isRunning = true;
+        JPushInterface.setAlias(this, new Random().nextInt(900) + 100, BaseUnits.getInstance().getPhoneKey());
     }
 
     @Override
