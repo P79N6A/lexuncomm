@@ -14,6 +14,7 @@ public class Request {
 
     public static final class StartActivityRspCode {
         public static final int PUSH_CARDCONTENT_JUMP = 0x1002; //从推送跳转至卡片页面
+        public static final int SCAN_ID_CARD = 0x1003; //身份证扫描
     }
 
     public static final class Broadcast {

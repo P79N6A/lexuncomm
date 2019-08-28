@@ -69,46 +69,34 @@ public class MyReceiver extends BroadcastReceiver {
 
     private void jump(Context context, String result) {
         //打开自定义的Activity
-        Intent i = new Intent();
-        if (TextUtils.isEmpty(result)) {
-            Log.e(TAG, "1");
-            i.setClass(context, CardContentActivity.class);
-            i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
-            context.startActivity(i);
-        } else {
+        if (!TextUtils.isEmpty(result)) {
             try {
+
+                Intent i = new Intent();
                 JSONObject jsonObject = new JSONObject(result);
-                i.putExtra("cardId", jsonObject.getString("CardID"));
-                i.putExtra("url", jsonObject.getString("Url"));
-                Log.e(TAG, jsonObject.getString("CardID"));
-                Log.e(TAG, jsonObject.getString("Url"));
-
-                if (TextUtils.isEmpty(jsonObject.getString("Url"))) {
-                    Log.e(TAG, "2");
-                    i.setClass(context, CardContentActivity.class);
-                    i.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                    context.startActivity(i);
+                if (CardContentActivity.isRunning) {
+                    i.setAction(Request.Broadcast.RELOADURL);
+                    i.putExtra("url", jsonObject.getString("Url"));
+                    context.sendBroadcast(i);
                 } else {
-                    if (CardContentActivity.isRunning) {
-
-                        i.setAction(Request.Broadcast.RELOADURL);
-                        i.putExtra("id", jsonObject.getString("CardID"));
-                        i.putExtra("url", jsonObject.getString("Url"));
-                        context.sendBroadcast(i);
-                    } else {
-                        CardItem cardItem = new CardItem();
-                        cardItem.setCardID(jsonObject.getString("CardID"));
-                        cardItem.setCardUrl(jsonObject.getString("Url"));
-                        i.setClass(context, CardContentActivity.class);
-                        i.putExtra("cardItem", cardItem);
-                        i.putExtra("type", Request.StartActivityRspCode.PUSH_CARDCONTENT_JUMP);
-                        i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                        context.startActivity(i);
-                    }
+                    i.setClass(context, CardContentActivity.class);
+                    i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    i.putExtra("url", jsonObject.getString("Url"));
+                    context.startActivity(i);
                 }
             } catch (JSONException e) {
                 e.printStackTrace();
-
+                if (!CardContentActivity.isRunning){
+                    Intent i = new Intent(context, CardContentActivity.class);
+                    i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    context.startActivity(i);
+                }
+            }
+        } else {
+            if (!CardContentActivity.isRunning){
+                Intent i = new Intent(context, CardContentActivity.class);
+                i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                context.startActivity(i);
             }
 
         }

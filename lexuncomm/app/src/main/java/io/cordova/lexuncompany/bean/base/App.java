@@ -10,7 +10,6 @@ import io.cordova.lexuncompany.application.MyApplication;
  */
 
 public class App {
-    public static final Context context = MyApplication.getInstance().getBaseContext();
 
     public static final String[] mPermissionList = new String[]{
             Manifest.permission.WRITE_EXTERNAL_STORAGE,
@@ -42,12 +41,12 @@ public class App {
     }
 
     public static class LexunCard {
-                public static final String CardUrl="http://122.114.207.137:6163/"; //乐巡生产环境下CardUrl
+//                public static final String CardUrl="http://122.114.207.137:6163/"; //乐巡生产环境下CardUrl
 //        public static final String CardUrl = "http://10.130.0.207:8010/#/"; //测试环境内网
-//        public static final String CardUrl = "http://183.129.130.119:12010/"; //测试环境外网
+        public static final String CardUrl = "http://183.129.130.119:12010/"; //测试环境外网
+
 
         public static final String BUGLY_APPID = "026a35dd56";  //bugly乐巡
-
 
     }
 }

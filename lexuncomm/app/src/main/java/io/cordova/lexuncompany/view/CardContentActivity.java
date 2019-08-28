@@ -17,6 +17,7 @@ import android.provider.Settings;
 import android.support.annotation.Nullable;
 import android.support.annotation.RequiresApi;
 import android.support.v4.app.ActivityCompat;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
@@ -35,11 +36,15 @@ import com.jph.takephoto.compress.CompressImageImpl;
 import com.jph.takephoto.model.TImage;
 import com.jph.takephoto.model.TResult;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
 import java.util.Random;
 
 import cn.jpush.android.api.JPushInterface;
 import io.cordova.lexuncompany.R;
+import io.cordova.lexuncompany.bean.IDCardBean;
 import io.cordova.lexuncompany.bean.base.App;
 import io.cordova.lexuncompany.bean.base.Request;
 import io.cordova.lexuncompany.databinding.ActivityCardContentBinding;
@@ -109,6 +114,15 @@ public class CardContentActivity extends BaseTakePhotoActivity implements Androi
 
     public static CardContentActivity getInstance() {
         return mInstance;
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        String url = intent.getStringExtra("url");
+        if (!TextUtils.isEmpty(url)){
+            mBinding.webView.loadUrl(url);
+        }
     }
 
 
@@ -192,7 +206,7 @@ public class CardContentActivity extends BaseTakePhotoActivity implements Androi
             if (keyEvent.getAction() == KeyEvent.ACTION_DOWN) {
                 if (i == KeyEvent.KEYCODE_BACK && mBinding.webView.canGoBack()) {
                     mBinding.webView.goBack();
-                    return false;
+                    return true;
                 }
             }
             return false;
@@ -340,7 +354,47 @@ public class CardContentActivity extends BaseTakePhotoActivity implements Androi
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-//        UMShareAPI.get(this).onActivityResult(requestCode, resultCode, data);
+        if (resultCode == RESULT_OK && requestCode == Request.StartActivityRspCode.SCAN_ID_CARD) {
+
+            try {
+                IDCardBean idCardBean = (IDCardBean) data.getSerializableExtra("id_card");
+                if (idCardBean != null) {
+                    JSONObject jsonObject = new JSONObject();
+                    JSONObject value = new JSONObject();
+                    if (idCardBean.getOrientation() == 1) {
+                        value.put("name", idCardBean.getName());
+                        value.put("gender", idCardBean.getGender());
+                        value.put("address", idCardBean.getAddress());
+                        value.put("IDNum", idCardBean.getNumber());
+                        value.put("nation", idCardBean.getNation());
+                    } else {
+                        value.put("issue", idCardBean.getPolice());
+                        value.put("valid", idCardBean.getDate());
+                    }
+
+                    jsonObject.put("status", "200");
+                    jsonObject.put("msg", "success");
+                    jsonObject.put("data", value);
+
+                    callBackResult(idCardBean.getCallback(), jsonObject.toString());
+                }
+
+            } catch (JSONException e) {
+                Log.e(TAG, e.toString());
+                e.printStackTrace();
+            }
+        }
+    }
+
+
+    /**
+     * 横竖屏切换
+     *
+     * @param requestedOrientation
+     */
+    @Override
+    public void setRequestedOrientation(int requestedOrientation) {
+        return;
     }
 
     @Override

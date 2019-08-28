@@ -1,7 +1,9 @@
 package io.cordova.lexuncompany.units;
 
+import android.Manifest;
 import android.content.Intent;
 import android.net.Uri;
+import android.support.v4.app.ActivityCompat;
 import android.util.Log;
 import android.webkit.JavascriptInterface;
 
@@ -17,12 +19,16 @@ import org.json.JSONObject;
 
 import java.util.Map;
 
+import exocr.exocrengine.CaptureActivity;
 import io.cordova.lexuncompany.application.MyApplication;
+import io.cordova.lexuncompany.bean.base.Request;
 import io.cordova.lexuncompany.inter.QrCodeScanInter;
 import io.cordova.lexuncompany.view.CardContentActivity;
 import io.cordova.lexuncompany.inter.CityPickerResultListener;
 import io.cordova.lexuncompany.view.QrCodeScanActivity;
 import io.cordova.lexuncompany.view.ScanQRCodeActivity;
+
+import static cn.bertsir.zbar.QrConfig.REQUEST_CAMERA;
 
 
 /**
@@ -370,6 +376,51 @@ public class AndroidtoJS implements QrCodeScanInter, CityPickerResultListener {
             sendCallBack(callBack, "200", "success", "data:image/jpeg;base64," + imageData);
         });
     }
+
+
+    /**
+     * 身份证正面
+     *
+     * @param value
+     */
+    @JavascriptInterface
+    public void IDCard_front(String value) {
+        if (BaseUnits.getInstance().checkPermission(CardContentActivity.getInstance(), Manifest.permission.CAMERA)) {
+            Intent intent = new Intent(CardContentActivity.getInstance(), CaptureActivity.class);
+
+            intent.putExtra("is_front", true);
+            intent.putExtra("callback", value);
+            CardContentActivity.getInstance().startActivityForResult(intent, Request.StartActivityRspCode.SCAN_ID_CARD);
+        } else {
+            ActivityCompat.requestPermissions(CardContentActivity.getInstance(),
+                    new String[]{Manifest.permission.CAMERA}, REQUEST_CAMERA);
+        }
+
+
+    }
+
+
+    /**
+     * 身份证反面
+     *
+     * @param value
+     */
+    @JavascriptInterface
+    public void IDCard_reverseSide(String value) {
+        if (BaseUnits.getInstance().checkPermission(CardContentActivity.getInstance(), Manifest.permission.CAMERA)) {
+            Intent intent = new Intent(CardContentActivity.getInstance(), CaptureActivity.class);
+            intent.putExtra("is_front", false);
+            intent.putExtra("callback", value);
+            CardContentActivity.getInstance().startActivityForResult(intent, Request.StartActivityRspCode.SCAN_ID_CARD);
+        } else {
+            ActivityCompat.requestPermissions(CardContentActivity.getInstance(),
+                    new String[]{Manifest.permission.CAMERA}, REQUEST_CAMERA);
+        }
+
+
+    }
+
+
 
     public void sendCallBack(String callBack, String status, String msg, String value) {
         Log.e(TAG, "callBack:" + callBack);

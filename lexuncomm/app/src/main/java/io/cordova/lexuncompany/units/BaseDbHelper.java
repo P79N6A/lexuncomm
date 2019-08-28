@@ -31,7 +31,7 @@ public class BaseDbHelper extends SQLiteOpenHelper {
      * 私有化构造方法
      */
     private BaseDbHelper() {
-        super(App.context, App.BaseDB.dbName, null, App.BaseDB.version);
+        super(MyApplication.getInstance().getApplicationContext(), App.BaseDB.dbName, null, App.BaseDB.version);
     }
 
     /**
@@ -226,7 +226,7 @@ public class BaseDbHelper extends SQLiteOpenHelper {
             os.close();
             is.close();
         } catch (IOException e) {
-            Log.e(TAG,"错误信息："+e.toString());
+            Log.e(TAG, "错误信息：" + e.toString());
             e.printStackTrace();
             return false;
         }
