@@ -1,7 +1,11 @@
 package io.cordova.lexuncompany.view;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.AlertDialog;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.ClipData;
 import android.content.ClipboardManager;
@@ -10,6 +14,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.databinding.DataBindingUtil;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -31,6 +36,10 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
+import com.amap.api.location.AMapLocation;
+import com.amap.api.location.AMapLocationClient;
+import com.amap.api.location.AMapLocationClientOption;
+import com.amap.api.location.AMapLocationListener;
 import com.jph.takephoto.compress.CompressImage;
 import com.jph.takephoto.compress.CompressImageImpl;
 import com.jph.takephoto.model.TImage;
@@ -44,6 +53,7 @@ import java.util.Random;
 
 import cn.jpush.android.api.JPushInterface;
 import io.cordova.lexuncompany.R;
+import io.cordova.lexuncompany.application.MyApplication;
 import io.cordova.lexuncompany.bean.IDCardBean;
 import io.cordova.lexuncompany.bean.base.App;
 import io.cordova.lexuncompany.bean.base.Request;
@@ -79,7 +89,8 @@ public class CardContentActivity extends BaseTakePhotoActivity implements Androi
     private static boolean isFirstLoaded = true;  //标记是否为第一次加载
     private IntentFilter mFilter = new IntentFilter();
     public static boolean isRunning = false;
-    private String mCode;
+
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -99,17 +110,28 @@ public class CardContentActivity extends BaseTakePhotoActivity implements Androi
 
     }
 
+
+
+
+
     @Override
     protected void onResume() {
         super.onResume();
         isRunning = true;
         JPushInterface.setAlias(this, new Random().nextInt(900) + 100, BaseUnits.getInstance().getPhoneKey());
+
     }
 
     @Override
     protected void onPause() {
         super.onPause();
         isRunning = false;
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+
     }
 
     public static CardContentActivity getInstance() {
@@ -120,7 +142,7 @@ public class CardContentActivity extends BaseTakePhotoActivity implements Androi
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         String url = intent.getStringExtra("url");
-        if (!TextUtils.isEmpty(url)){
+        if (!TextUtils.isEmpty(url)) {
             mBinding.webView.loadUrl(url);
         }
     }
@@ -159,7 +181,7 @@ public class CardContentActivity extends BaseTakePhotoActivity implements Androi
 
             @Override
             public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {
-                callback.invoke(origin,true,false);
+                callback.invoke(origin, true, false);
                 super.onGeolocationPermissionsShowPrompt(origin, callback);
             }
 
@@ -188,9 +210,8 @@ public class CardContentActivity extends BaseTakePhotoActivity implements Androi
             }
         });
 
-        mBinding.webView.addJavascriptInterface(AndroidtoJS.getInstance(this), "NativeForJSUnits");
+        mBinding.webView.addJavascriptInterface(new AndroidtoJS(this), "NativeForJSUnits");
         mBinding.webView.loadUrl(App.LexunCard.CardUrl);
-//        mBinding.webView.loadUrl("http://192.168.50.251/");
     }
 
     private void setListener() {
@@ -281,11 +302,6 @@ public class CardContentActivity extends BaseTakePhotoActivity implements Androi
 
     }
 
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-    }
 
     @Override
     protected void onDestroy() {
@@ -394,7 +410,7 @@ public class CardContentActivity extends BaseTakePhotoActivity implements Androi
      */
     @Override
     public void setRequestedOrientation(int requestedOrientation) {
-        return;
+
     }
 
     @Override
@@ -474,7 +490,7 @@ public class CardContentActivity extends BaseTakePhotoActivity implements Androi
             String content = item.getText().toString();
             Log.e(TAG, content);
             if (content.split("=").length == 2 && content.split("=")[0].equals("lexunReferralCode")) {
-                mCode = content.split("=")[1];
+                String mCode = content.split("=")[1];
                 ConfigUnits.getInstance().setLexunReferralCode(mCode);
                 Log.e(TAG, "推广码为1：" + mCode);
                 Log.e(TAG, "推广码为2：" + ConfigUnits.getInstance().getLexunReferralCode());

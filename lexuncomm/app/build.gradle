@@ -44,8 +44,8 @@ android {
     compileSdkVersion 28
     buildToolsVersion '27.0.3'
     defaultConfig {
-        versionCode 14
-        versionName "1.0.11"
+        versionCode 15
+        versionName "1.1.0"
         applicationId "io.cordova.lexuncompany"
         targetSdkVersion 28
         minSdkVersion 18
@@ -57,7 +57,7 @@ android {
     }
 
     lintOptions {
-        abortOnError false;
+        abortOnError false
     }
 
 
@@ -131,4 +131,7 @@ dependencies {
     //butterknife
     implementation 'com.jakewharton:butterknife:8.4.0'
     annotationProcessor 'com.jakewharton:butterknife-compiler:8.4.0'
+
+
+    implementation 'com.amap.api:location:latest.integration'
 }
