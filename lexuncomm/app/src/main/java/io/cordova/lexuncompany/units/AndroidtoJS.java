@@ -4,6 +4,7 @@ import android.Manifest;
 import android.content.Intent;
 import android.net.Uri;
 import android.support.v4.app.ActivityCompat;
+import android.text.TextUtils;
 import android.util.Log;
 import android.webkit.JavascriptInterface;
 
@@ -11,6 +12,10 @@ import com.amap.api.location.AMapLocation;
 import com.amap.api.location.AMapLocationClient;
 import com.amap.api.location.AMapLocationClientOption;
 import com.amap.api.location.AMapLocationListener;
+import com.baidu.location.BDAbstractLocationListener;
+import com.baidu.location.BDLocation;
+import com.baidu.location.LocationClient;
+import com.baidu.location.LocationClientOption;
 import com.tencent.bugly.beta.Beta;
 
 import org.json.JSONException;
@@ -193,7 +198,13 @@ public class AndroidtoJS implements QrCodeScanInter, CityPickerResultListener {
      */
     @JavascriptInterface
     public void getCurrentCity(String callBack) {
-        sendCallBack(callBack, "200", "success", ConfigUnits.getInstance().getCityIdByName(UserUnits.getInstance().getSelectCity()));
+        Log.d(TAG, "getCurrentCity: " + callBack);
+        if (TextUtils.isEmpty(UserUnits.getInstance().getSelectCity())) {
+            sendCallBack(callBack, "200", "success", ConfigUnits.getInstance().getCityIdByName(UserUnits.getInstance().getSelectCity()));
+        } else {
+            sendCallBack(callBack, "500", "fail", "");
+        }
+
     }
 
     @JavascriptInterface
@@ -260,13 +271,14 @@ public class AndroidtoJS implements QrCodeScanInter, CityPickerResultListener {
             mLocationOption.setInterval(0);
 
             mLocationClient1.setLocationOption(mLocationOption);
+
+
             mLocationClient1.setLocationListener(new AMapLocationListener() {
                 @Override
                 public void onLocationChanged(AMapLocation aMapLocation) {
                     if (aMapLocation != null && aMapLocation.getLatitude() != 0 && aMapLocation.getLongitude() != 0) {
                         Log.d(TAG, "定位: " + aMapLocation.getLatitude() + "," + aMapLocation.getLongitude());
                         sendCallBack(callBack, "200", "success", aMapLocation.getLatitude() + "," + aMapLocation.getLongitude());
-
                         if (mLocationClient1 != null) {
                             mLocationClient1.stopLocation();
                             mLocationClient1 = null;
@@ -277,6 +289,8 @@ public class AndroidtoJS implements QrCodeScanInter, CityPickerResultListener {
             });
             mLocationClient1.startLocation();
         }
+
+
     }
 //    /**
 //     * 获取百度定位点
@@ -319,6 +333,43 @@ public class AndroidtoJS implements QrCodeScanInter, CityPickerResultListener {
     public void beginPatrol(String callBack) {
         Log.d(TAG, "beginPatrol: " + callBack);
         if (mLocationClient == null) {
+            Log.d(TAG, "巡逻:13");
+            mLocationClient = new AMapLocationClient(MyApplication.getInstance());
+            AMapLocationClientOption mLocationOption = new AMapLocationClientOption();
+
+            mLocationOption.setLocationMode(AMapLocationClientOption.AMapLocationMode.Hight_Accuracy);
+            mLocationOption.setInterval(7000);
+            mLocationClient.setLocationOption(mLocationOption);
+            mLocationClient.startLocation();
+            mLocationClient.setLocationListener(new AMapLocationListener() {
+                @Override
+                public void onLocationChanged(AMapLocation aMapLocation) {
+                    Log.d(TAG, "巡逻:1 ");
+                    if (aMapLocation != null && aMapLocation.getLatitude() != 0 && aMapLocation.getLongitude() != 0) {
+
+                        sendCallBack(callBack, "200", "success", aMapLocation.getLatitude() + "," + aMapLocation.getLongitude());
+                    }
+
+                }
+            });
+
+        } else if (!mLocationClient.isStarted()) {
+            Log.d(TAG, "巡逻:2 ");
+            mLocationClient.startLocation();
+        }else {
+            Log.d(TAG, "巡逻:4 ");
+        }
+
+    }
+
+    /**
+     * 开始巡逻（高德坐标系统）
+     */
+    @JavascriptInterface
+    public void beginPatrol1(String callBack) {
+        Log.d(TAG, "beginPatrol1: " + callBack);
+        if (mLocationClient == null) {
+
             mLocationClient = new AMapLocationClient(MyApplication.getInstance());
             AMapLocationClientOption mLocationOption = new AMapLocationClientOption();
 
@@ -326,17 +377,19 @@ public class AndroidtoJS implements QrCodeScanInter, CityPickerResultListener {
             mLocationOption.setInterval(7000);
             mLocationOption.setOnceLocation(false);
             mLocationClient.setLocationOption(mLocationOption);
+            mLocationClient.startLocation();
             mLocationClient.setLocationListener(new AMapLocationListener() {
                 @Override
                 public void onLocationChanged(AMapLocation aMapLocation) {
+                    Log.d(TAG, "巡逻: ");
                     if (aMapLocation != null && aMapLocation.getLatitude() != 0 && aMapLocation.getLongitude() != 0) {
-                        Log.d(TAG, "巡逻: " + aMapLocation.getLatitude() + "," + aMapLocation.getLongitude());
+
                         sendCallBack(callBack, "200", "success", aMapLocation.getLatitude() + "," + aMapLocation.getLongitude());
                     }
 
                 }
             });
-            mLocationClient.startLocation();
+
         } else if (!mLocationClient.isStarted()) {
             mLocationClient.startLocation();
         }
@@ -352,10 +405,11 @@ public class AndroidtoJS implements QrCodeScanInter, CityPickerResultListener {
         Log.d(TAG, "endPatrol: ");
         if (mLocationClient != null) {
             mLocationClient.stopLocation();
+            mLocationClient = null;
         }
     }
 
-
+//
 //    @JavascriptInterface
 //    public void beginPatrol(String callBack) {
 //
@@ -498,7 +552,6 @@ public class AndroidtoJS implements QrCodeScanInter, CityPickerResultListener {
 
 
     public void sendCallBack(String callBack, String status, String msg, String value) {
-        Log.e(TAG, "callBack:" + callBack);
         JSONObject jsonObject = new JSONObject();
         JSONObject data = new JSONObject();
         try {
@@ -506,7 +559,6 @@ public class AndroidtoJS implements QrCodeScanInter, CityPickerResultListener {
             jsonObject.put("status", status);
             jsonObject.put("msg", msg);
             jsonObject.put("data", data);
-            Log.e(TAG, "返回结果：" + value);
             mCallBack.callBackResult(callBack, jsonObject.toString());
         } catch (JSONException e) {
             Log.e(TAG, e.toString());
@@ -545,3 +597,4 @@ public class AndroidtoJS implements QrCodeScanInter, CityPickerResultListener {
         sendCallBackJson(callBack, "200", "success", result);
     }
 }
+

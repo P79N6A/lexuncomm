@@ -80,7 +80,7 @@ import static io.cordova.lexuncompany.bean.base.Request.Permissions.REQUEST_ALL_
  */
 
 public class CardContentActivity extends BaseTakePhotoActivity implements AndroidToJSCallBack {
-    private static final String TAG = "CardContentActivity--";
+    private static final String TAG = "libin";
     private static CardContentActivity mInstance;
     private ActivityCardContentBinding mBinding;
 
@@ -109,9 +109,6 @@ public class CardContentActivity extends BaseTakePhotoActivity implements Androi
         setListener();
 
     }
-
-
-
 
 
     @Override
@@ -155,14 +152,14 @@ public class CardContentActivity extends BaseTakePhotoActivity implements Androi
         webSettings.setJavaScriptCanOpenWindowsAutomatically(true); //设置运行JS弹窗
         webSettings.setUserAgentString(webSettings.getUserAgentString() + "-Android");  //设置用户代理
         webSettings.setDomStorageEnabled(true);
-        webSettings.setAllowFileAccess(true);
         webSettings.setCacheMode(WebSettings.LOAD_NO_CACHE);
-        webSettings.setSupportZoom(true);
-        webSettings.setLayoutAlgorithm(WebSettings.LayoutAlgorithm.NORMAL);
-
         //启用地理定位
         webSettings.setGeolocationEnabled(true);
+        webSettings.setSupportZoom(true);
+        webSettings.setLayoutAlgorithm(WebSettings.LayoutAlgorithm.NORMAL);
         webSettings.setUseWideViewPort(true);
+        webSettings.setMediaPlaybackRequiresUserGesture(true);
+        webSettings.setAllowFileAccessFromFileURLs(true);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             webSettings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
         }
@@ -192,15 +189,16 @@ public class CardContentActivity extends BaseTakePhotoActivity implements Androi
         });
 
         mBinding.webView.setWebViewClient(new WebViewClient() {
-            @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+
             @Override
-            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-                if (request.getUrl() == null) return false;
-                if (request.getUrl().toString().startsWith("http:") || request.getUrl().toString().startsWith("https:")) {
-                    view.loadUrl(String.valueOf(request.getUrl()));
+            public boolean shouldOverrideUrlLoading(WebView view, String url) {
+
+                if (url == null) return false;
+                if (url.startsWith("http:") || url.startsWith("https:")) {
+                    view.loadUrl(url);
                 } else {
                     try {
-                        Intent intent = new Intent(Intent.ACTION_VIEW, request.getUrl());   //UrlScheam为自定义的，打开APP
+                        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
                         startActivity(intent);
                     } catch (Exception e) {
                         return true;
@@ -210,7 +208,8 @@ public class CardContentActivity extends BaseTakePhotoActivity implements Androi
             }
         });
 
-        mBinding.webView.addJavascriptInterface(new AndroidtoJS(this), "NativeForJSUnits");
+        AndroidtoJS androidtoJS = new AndroidtoJS(this);
+        mBinding.webView.addJavascriptInterface(androidtoJS, "NativeForJSUnits");
         mBinding.webView.loadUrl(App.LexunCard.CardUrl);
     }
 
@@ -287,6 +286,8 @@ public class CardContentActivity extends BaseTakePhotoActivity implements Androi
         if (FormatUtils.getIntances().isEmpty(callBack)) {
             return;
         }
+
+        Log.d(TAG, callBack + ":" + value);
 
         runOnUiThread(() -> {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
