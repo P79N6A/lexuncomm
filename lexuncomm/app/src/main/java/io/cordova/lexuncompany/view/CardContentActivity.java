@@ -9,6 +9,7 @@ import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.ClipData;
 import android.content.ClipboardManager;
+import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -22,10 +23,12 @@ import android.provider.Settings;
 import android.support.annotation.Nullable;
 import android.support.annotation.RequiresApi;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.NotificationCompat;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.WindowManager;
 import android.view.animation.AnimationUtils;
 import android.webkit.GeolocationPermissions;
 import android.webkit.JavascriptInterface;
@@ -36,10 +39,6 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
-import com.amap.api.location.AMapLocation;
-import com.amap.api.location.AMapLocationClient;
-import com.amap.api.location.AMapLocationClientOption;
-import com.amap.api.location.AMapLocationListener;
 import com.jph.takephoto.compress.CompressImage;
 import com.jph.takephoto.compress.CompressImageImpl;
 import com.jph.takephoto.model.TImage;
@@ -48,11 +47,15 @@ import com.jph.takephoto.model.TResult;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Random;
 
 import cn.jpush.android.api.JPushInterface;
 import io.cordova.lexuncompany.R;
+import io.cordova.lexuncompany.amap.LocationService;
+import io.cordova.lexuncompany.amap.LocationStatusManager;
+import io.cordova.lexuncompany.amap.Utils;
 import io.cordova.lexuncompany.application.MyApplication;
 import io.cordova.lexuncompany.bean.IDCardBean;
 import io.cordova.lexuncompany.bean.base.App;
@@ -90,11 +93,25 @@ public class CardContentActivity extends BaseTakePhotoActivity implements Androi
     private IntentFilter mFilter = new IntentFilter();
     public static boolean isRunning = false;
 
+    //开启gps
+    private AlertDialog alertDialog;
+
+    private AndroidtoJS androidtoJS;
+
+    private NotificationManager notificationManager = null;
+
+    //巡逻callback
+    private String locationCallback;
+
+
+    public static final String RECEIVER_ACTION = "location_in_background";
+
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mBinding = DataBindingUtil.setContentView(this, R.layout.activity_card_content);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         AndroidBug5497Workaround.assistActivity(mBinding.getRoot());  //解决在沉浸式菜单栏中，软键盘不能顶起页面的bug
         date();  //每次打开APP都获取剪切板数据,检查是否有推广码
         mInstance = this;
@@ -108,6 +125,163 @@ public class CardContentActivity extends BaseTakePhotoActivity implements Androi
 
         setListener();
 
+
+
+//        buildNotification();
+
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(RECEIVER_ACTION);
+        registerReceiver(locationChangeBroadcastReceiver, intentFilter);
+
+
+    }
+
+    private BroadcastReceiver locationChangeBroadcastReceiver = new BroadcastReceiver() {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (RECEIVER_ACTION.equals(action)) {
+
+                String location= intent.getStringExtra("location");
+                sendCallback(locationCallback, "200", "success", location);
+
+            }
+        }
+    };
+
+
+    /**
+     * @param callback
+     * @param status
+     * @param msg
+     * @param value
+     */
+    private void sendCallback(String callback, String status, String msg, String value) {
+
+        try {
+            JSONObject jsonObject = new JSONObject();
+            JSONObject data = new JSONObject();
+            data.put("value", value);
+            jsonObject.put("status", status);
+            jsonObject.put("msg", msg);
+            jsonObject.put("data", data);
+            callBackResult(callback, jsonObject.toString());
+        } catch (JSONException e) {
+            Log.e(TAG, e.toString());
+            callBackResult(callback, "未知错误，联系管理员");
+            e.printStackTrace();
+        }
+    }
+
+
+    /**
+     * 开始定位服务
+     */
+    public void startLocationService(String callback) {
+        locationCallback = callback;
+        getApplicationContext().startService(new Intent(this, LocationService.class));
+        LocationStatusManager.getInstance().resetToInit(getApplicationContext());
+    }
+
+    /**
+     * 关闭服务
+     * 先关闭守护进程，再关闭定位服务
+     */
+    public void stopLocationService() {
+        sendBroadcast(Utils.getCloseBrodecastIntent());
+        LocationStatusManager.getInstance().resetToInit(getApplicationContext());
+    }
+
+
+    /**
+     * @return 后台定位
+     */
+    private void buildNotification() {
+        Notification notification;
+        if (android.os.Build.VERSION.SDK_INT >= 26) {
+            //Android O上对Notification进行了修改，如果设置的targetSDKVersion>=26建议使用此种方式创建通知栏
+            if (null == notificationManager) {
+                notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            }
+            String channelId = getPackageName();
+            NotificationChannel notificationChannel = new NotificationChannel(channelId,
+                    "定位", NotificationManager.IMPORTANCE_HIGH);
+            notificationChannel.enableLights(false);
+            notificationChannel.enableVibration(false);
+            notificationChannel.setVibrationPattern(new long[]{0});
+            notificationChannel.setSound(null, null);
+            notificationManager.createNotificationChannel(notificationChannel);
+
+            notification = new Notification.Builder(this, channelId)
+                    .setContentTitle(getString(R.string.app_name))
+                    .setSmallIcon(R.mipmap.logo)
+                    .setOngoing(true)
+                    .build();
+
+        } else {
+            notification = new NotificationCompat.Builder(this)
+                    .setContentTitle(getString(R.string.app_name))
+                    .setSmallIcon(R.mipmap.ic_launcher)
+                    .setOngoing(true)
+                    .setVibrate(new long[]{0})
+                    .setSound(null)
+                    .build();
+
+        }
+        notificationManager.notify(2001, notification);
+    }
+
+
+    /**
+     * 是否开启gps
+     */
+    private void isOpenGps() {
+        if (!ConfigUnits.getInstance().isOpenGps()) {
+            Log.d(TAG, "gps未开启");
+            if (alertDialog != null) {
+                alertDialog.show();
+                return;
+            }
+            alertDialog = new AlertDialog.Builder(this)
+                    .setTitle("提示")
+                    .setMessage("该应用需要开启GPS定位服务，请检查是否开启并选择高精确度模式")
+                    .setIcon(R.mipmap.logo)
+                    .setPositiveButton("去开启", (dialogInterface, i1) -> openGps())
+                    .setNegativeButton("取消", (dialogInterface, i12) -> cancelGps()).create();
+            alertDialog.setCanceledOnTouchOutside(false);
+            alertDialog.setCancelable(false);
+            alertDialog.show();
+        } else {
+            Log.d(TAG, "gps开启");
+            if (alertDialog != null && alertDialog.isShowing()) {
+                alertDialog.dismiss();
+            }
+        }
+    }
+
+    /**
+     * 下拉状态栏开启gps,点击取消按钮作判断
+     */
+    public void cancelGps() {
+        if (ConfigUnits.getInstance().isOpenGps()) {
+            if (alertDialog != null && alertDialog.isShowing()) {
+                alertDialog.dismiss();
+            }
+        } else {
+            finish();
+        }
+    }
+
+    /**
+     * 开启gps
+     */
+    private void openGps() {
+        if (alertDialog != null && alertDialog.isShowing()) {
+            alertDialog.dismiss();
+        }
+        Intent settingsIntent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+        startActivity(settingsIntent);
     }
 
 
@@ -116,6 +290,7 @@ public class CardContentActivity extends BaseTakePhotoActivity implements Androi
         super.onResume();
         isRunning = true;
         JPushInterface.setAlias(this, new Random().nextInt(900) + 100, BaseUnits.getInstance().getPhoneKey());
+        isOpenGps();
 
     }
 
@@ -123,12 +298,6 @@ public class CardContentActivity extends BaseTakePhotoActivity implements Androi
     protected void onPause() {
         super.onPause();
         isRunning = false;
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-
     }
 
     public static CardContentActivity getInstance() {
@@ -172,6 +341,7 @@ public class CardContentActivity extends BaseTakePhotoActivity implements Androi
                         isFirstLoaded = false;
                         mBinding.layoutLoading.startAnimation(AnimationUtils.loadAnimation(CardContentActivity.this, R.anim.layout_card_loading_close));
                         mBinding.layoutLoading.setVisibility(View.GONE);
+
                     }
                 }
             }
@@ -208,9 +378,10 @@ public class CardContentActivity extends BaseTakePhotoActivity implements Androi
             }
         });
 
-        AndroidtoJS androidtoJS = new AndroidtoJS(this);
+        androidtoJS = new AndroidtoJS(this);
         mBinding.webView.addJavascriptInterface(androidtoJS, "NativeForJSUnits");
         mBinding.webView.loadUrl(App.LexunCard.CardUrl);
+
     }
 
     private void setListener() {
@@ -240,18 +411,17 @@ public class CardContentActivity extends BaseTakePhotoActivity implements Androi
         ActivityCompat.requestPermissions(this, App.mPermissionList, REQUEST_ALL_PERMISSIONS);
     }
 
-    @Override
-    public void finish() {
-        super.finish();
-    }
-
-    public void finish(View view) {
+    /**
+     * @param view 退出app
+     */
+    public void closeApp(View view) {
         if (mBinding.webView.canGoBack()) {
             mBinding.webView.goBack();
         } else {
             finish();
         }
     }
+
 
     /**
      * 拍照或选择照片
@@ -306,7 +476,6 @@ public class CardContentActivity extends BaseTakePhotoActivity implements Androi
 
     @Override
     protected void onDestroy() {
-        super.onDestroy();
         mInstance = null;
         mListener = null;
         mFilter = null;
@@ -314,6 +483,12 @@ public class CardContentActivity extends BaseTakePhotoActivity implements Androi
         unregisterReceiver(mBroadcastReceiver);
         destroyWebView();
         mBinding = null;
+
+        if (locationChangeBroadcastReceiver != null)
+            unregisterReceiver(locationChangeBroadcastReceiver);
+
+        super.onDestroy();
+
     }
 
     public void destroyWebView() {

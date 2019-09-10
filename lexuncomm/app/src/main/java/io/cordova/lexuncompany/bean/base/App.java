@@ -46,9 +46,6 @@ public class App {
         public static final String CardUrl = "http://183.129.130.119:12010/"; //测试环境外网
 
 
-//        public static final String CardUrl ="http://192.168.80.240/";
-
-
         //        public static final String CardUrl = "http://10.130.0.207:8010/#/"; //测试环境内网
 
         public static final String BUGLY_APPID = "026a35dd56";  //bugly乐巡

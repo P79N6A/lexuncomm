@@ -1,7 +1,15 @@
 package io.cordova.lexuncompany.units;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.graphics.Color;
+import android.location.LocationManager;
 import android.net.Uri;
 import android.support.v4.app.ActivityCompat;
 import android.text.TextUtils;
@@ -24,6 +32,7 @@ import org.json.JSONObject;
 import java.util.Map;
 
 import exocr.exocrengine.CaptureActivity;
+import io.cordova.lexuncompany.R;
 import io.cordova.lexuncompany.application.MyApplication;
 import io.cordova.lexuncompany.bean.base.Request;
 import io.cordova.lexuncompany.inter.QrCodeScanInter;
@@ -53,6 +62,7 @@ public class AndroidtoJS implements QrCodeScanInter, CityPickerResultListener {
     private AMapLocationClient mLocationClient1;
 
     private AndroidToJSCallBack mCallBack;
+
 
 
     public AndroidtoJS(AndroidToJSCallBack callBack) {
@@ -257,6 +267,56 @@ public class AndroidtoJS implements QrCodeScanInter, CityPickerResultListener {
 
 
     /**
+     * 是否有定位权限
+     *
+     * @param value
+     */
+    @JavascriptInterface
+    public void locationServicesEnabled(String value) {
+        if (ActivityCompat.checkSelfPermission(CardContentActivity.getInstance(),
+                Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            try {
+                JSONObject jsonObject = new JSONObject();
+                jsonObject.put("code", "001");
+                jsonObject.put("msg", "没有定位权限");
+
+                sendCallBackJson(value, "500", "error", jsonObject);
+
+                return;
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+            return;
+        }
+
+
+        LocationManager locationManager = (LocationManager) CardContentActivity.getInstance().getSystemService(Context.LOCATION_SERVICE);
+        if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+            try {
+                JSONObject jsonObject = new JSONObject();
+                jsonObject.put("code", "002");
+                jsonObject.put("msg", "GPS未开启");
+                sendCallBackJson(value, "500", "error", jsonObject);
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+            return;
+        }
+
+        try {
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("code", "000");
+            jsonObject.put("msg", "success");
+            sendCallBackJson(value, "200", "success", jsonObject);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    /**
      * 获取高德定位点
      *
      * @return
@@ -269,7 +329,6 @@ public class AndroidtoJS implements QrCodeScanInter, CityPickerResultListener {
 
             mLocationOption.setLocationMode(AMapLocationClientOption.AMapLocationMode.Hight_Accuracy);
             mLocationOption.setInterval(0);
-
             mLocationClient1.setLocationOption(mLocationOption);
 
 
@@ -331,70 +390,38 @@ public class AndroidtoJS implements QrCodeScanInter, CityPickerResultListener {
      */
     @JavascriptInterface
     public void beginPatrol(String callBack) {
-        Log.d(TAG, "beginPatrol: " + callBack);
-        if (mLocationClient == null) {
-            Log.d(TAG, "巡逻:13");
-            mLocationClient = new AMapLocationClient(MyApplication.getInstance());
-            AMapLocationClientOption mLocationOption = new AMapLocationClientOption();
+        Log.d(TAG, "beginPatrol2: " + callBack);
+//        if (mLocationClient == null) {
+//            Log.d(TAG, "巡逻:13");
+//            mLocationClient = new AMapLocationClient(MyApplication.getInstance());
+//            AMapLocationClientOption mLocationOption = new AMapLocationClientOption();
+//
+//            mLocationOption.setLocationMode(AMapLocationClientOption.AMapLocationMode.Hight_Accuracy);
+//            mLocationOption.setInterval(10000);
+//            mLocationOption.setLocationCacheEnable(false);
+//            mLocationClient.setLocationOption(mLocationOption);
+//            mLocationClient.startLocation();
+//            mLocationClient.setLocationListener(new AMapLocationListener() {
+//                @Override
+//                public void onLocationChanged(AMapLocation aMapLocation) {
+//                    if (aMapLocation != null && aMapLocation.getLatitude() != 0 && aMapLocation.getLongitude() != 0) {
+//
+//                        sendCallBack(callBack, "200", "success", aMapLocation.getLatitude() + "," + aMapLocation.getLongitude());
+//                        Log.d(TAG, "onLocationChanged: "+aMapLocation.getLatitude() + "," + aMapLocation.getLongitude());
+//                    }
+//
+//                }
+//            });
+//
+//        } else if (!mLocationClient.isStarted()) {
+//            mLocationClient.startLocation();
+//        }
 
-            mLocationOption.setLocationMode(AMapLocationClientOption.AMapLocationMode.Hight_Accuracy);
-            mLocationOption.setInterval(7000);
-            mLocationClient.setLocationOption(mLocationOption);
-            mLocationClient.startLocation();
-            mLocationClient.setLocationListener(new AMapLocationListener() {
-                @Override
-                public void onLocationChanged(AMapLocation aMapLocation) {
-                    Log.d(TAG, "巡逻:1 ");
-                    if (aMapLocation != null && aMapLocation.getLatitude() != 0 && aMapLocation.getLongitude() != 0) {
-
-                        sendCallBack(callBack, "200", "success", aMapLocation.getLatitude() + "," + aMapLocation.getLongitude());
-                    }
-
-                }
-            });
-
-        } else if (!mLocationClient.isStarted()) {
-            Log.d(TAG, "巡逻:2 ");
-            mLocationClient.startLocation();
-        }else {
-            Log.d(TAG, "巡逻:4 ");
-        }
-
-    }
-
-    /**
-     * 开始巡逻（高德坐标系统）
-     */
-    @JavascriptInterface
-    public void beginPatrol1(String callBack) {
-        Log.d(TAG, "beginPatrol1: " + callBack);
-        if (mLocationClient == null) {
-
-            mLocationClient = new AMapLocationClient(MyApplication.getInstance());
-            AMapLocationClientOption mLocationOption = new AMapLocationClientOption();
-
-            mLocationOption.setLocationMode(AMapLocationClientOption.AMapLocationMode.Hight_Accuracy);
-            mLocationOption.setInterval(7000);
-            mLocationOption.setOnceLocation(false);
-            mLocationClient.setLocationOption(mLocationOption);
-            mLocationClient.startLocation();
-            mLocationClient.setLocationListener(new AMapLocationListener() {
-                @Override
-                public void onLocationChanged(AMapLocation aMapLocation) {
-                    Log.d(TAG, "巡逻: ");
-                    if (aMapLocation != null && aMapLocation.getLatitude() != 0 && aMapLocation.getLongitude() != 0) {
-
-                        sendCallBack(callBack, "200", "success", aMapLocation.getLatitude() + "," + aMapLocation.getLongitude());
-                    }
-
-                }
-            });
-
-        } else if (!mLocationClient.isStarted()) {
-            mLocationClient.startLocation();
-        }
+        CardContentActivity.getInstance().startLocationService(callBack);
 
     }
+
+
 
 
     /**
@@ -403,10 +430,12 @@ public class AndroidtoJS implements QrCodeScanInter, CityPickerResultListener {
     @JavascriptInterface
     public void endPatrol() {
         Log.d(TAG, "endPatrol: ");
-        if (mLocationClient != null) {
-            mLocationClient.stopLocation();
-            mLocationClient = null;
-        }
+//        if (mLocationClient != null) {
+//            mLocationClient.stopLocation();
+//            mLocationClient = null;
+//        }
+
+        CardContentActivity.getInstance().stopLocationService();
     }
 
 //

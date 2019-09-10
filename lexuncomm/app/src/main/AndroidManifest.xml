@@ -193,6 +193,21 @@
         </service>
 
         <service android:name="com.amap.api.location.APSService" />
+
+        <service
+            android:name=".amap.LocationService"
+            android:process=":remote1">
+            <intent-filter>
+                <action android:name="io.cordova.lexuncompany.amap.LocationService"></action>
+            </intent-filter>
+        </service>
+        <service
+            android:name=".amap.LocationHelperService"
+            android:process=":remote2">
+            <intent-filter>
+                <action android:name="io.cordova.lexuncompany.amap.LocationHelperService"></action>
+            </intent-filter>
+        </service>
     </application>
 
     <permission
@@ -258,6 +273,7 @@
     <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
     <uses-permission android:name="android.permission.GET_TASKS" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
 
 </manifest>
